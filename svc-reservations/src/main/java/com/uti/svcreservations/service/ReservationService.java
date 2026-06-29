@@ -9,18 +9,18 @@ import java.util.List;
 
 public interface ReservationService {
 
+    ReservationResponse createReservation(ReservationRequest Request);
+
     List<ReservationResponse> getReservations();
 
     ReservationResponse getReservationById(Long id);
 
-    ReservationResponse createReservation(ReservationRequest Request);
-
-    ReservationResponse updateReservation(Long id, ReservationRequest Request);
+    List<ReservationResponse> getReservationsByEmail(String email);
 
     void deleteReservation(Long id);
 
     //(patch)
-    ReservationResponse updateCheckOutDate(Long id, LocalDate checkOutDate);
+    ReservationResponse checkout(Long id);
 
     List<ReservationResponse> getReservationsByStatus(Status Status);
 

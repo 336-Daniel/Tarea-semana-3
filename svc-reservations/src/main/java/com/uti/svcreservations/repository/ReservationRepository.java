@@ -12,10 +12,9 @@ import java.util.Optional;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     Optional<Reservation> findById(Long id);
-    List<Reservation> findAllByUserId(Long userId);
-    List<Reservation> findAllByStatus(String status);
-    List<Reservation> findAllByEmail(String email);
+    List<Reservation> findAllByStatus(Status status);
+    List<Reservation> findAllByGuestEmail(String guestEmail);
 
 
-    String status(Status status);
+
 }

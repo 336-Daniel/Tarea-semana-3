@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.module.ResolutionException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,34 +51,39 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional
-    public ReservationResponse createReservation(ReservationRequest Request) {
-        Reservation reservation = reservationMapper.toEntity(Request);
-        Reservation savedReservation = reservationRepository.save(reservation);
-        log.info("nueva reserva creada con el id: {}", savedReservation.getId());
-        return  reservationMapper.toResponse(savedReservation);
+    @Transactional(readOnly = true)
+    public List<ReservationResponse> getReservationsByEmail(String email) {
+        log.info("fetching reservations by email: {}", email);
+        return reservationRepository.findAllByGuestEmail(email)
+                .stream()
+                .map(reservationMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public ReservationResponse updateReservation(Long id, ReservationRequest Request) {
-        log.info("updating reservation by id: {}", id);
-        Reservation existingReservation = reservationRepository.findById(id)
-                .orElseThrow(()-> new ResolutionException(
-                        "Reservacion no encontrada con el id: " + id
-                ));
+    public ReservationResponse createReservation(ReservationRequest Request) {
+        log.info("creating reservation for guest: {}", Request.getGuestName());
+        Reservation reservation = reservationMapper.toEntity(Request);
+        reservation.setStatus(Status.ACTIVE);
+        reservation.setCreatedAt(LocalDateTime.now());
 
-        reservationMapper.updateEntityFromRequest(Request,existingReservation);
-        Reservation updateReservation = reservationRepository.save(existingReservation);
-        log.info("reserva actualizada exitosamente con el id: {}", updateReservation.getId());
-        return reservationMapper.toResponse(updateReservation);
+        long daysBetween = ChronoUnit.DAYS.between(Request.getCheckInDate(), Request.getCheckOutDate());
+        reservation.setTotalNights((int) daysBetween);
+
+        Reservation savedReservation = reservationRepository.save(reservation);
+        log.info("Reserva creada exitosamente con el id: {}", savedReservation.getId());
+
+        return  reservationMapper.toResponse(savedReservation);
+
     }
+
 
     @Override
     @Transactional
     public void deleteReservation(Long id) {
         log.info("deleting reservation by id: {}", id);
-        if(reservationRepository.existsById(id)){
+        if(!reservationRepository.existsById(id)){
             throw new ResourceNotfoundException(
                     "Reservacion no encontrada con id: "+ id);
         }
@@ -88,17 +95,22 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public ReservationResponse updateCheckOutDate(Long id, LocalDate checkOutDate) {
-        log.info("updating check out date by id: {}", id);
+    public ReservationResponse checkout(Long id) {
+        log.info("checking out reservation by id: {}", id);
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(()-> new ResolutionException(
                         "Reservacion no encontrada con id: " + id
                 ));
-        reservation.setCheckOutDate(checkOutDate);
-        Reservation updatedReservation = reservationRepository.save(reservation);
-        log.info("fecha de salida actualizada exitosamente con el id: {}", id);
-        return reservationMapper.toResponse(updatedReservation);
+        reservation.setStatus(Status.COMPLETED);
+        reservation.setCheckOutDate(LocalDate.now());
+
+        Reservation updateReservation = reservationRepository.save(reservation);
+
+        log.info("Checkout realizado exitosamente. Reserva con id: {} marcada como COMPLETED", id);
+
+        return reservationMapper.toResponse(updateReservation) ;
     }
+
 
     @Override
     @Transactional
