@@ -1,8 +1,48 @@
 version: '3.8'
 services:
 
+  # Base de datos para svc-rooms
+  rooms-db:
+    image: postgres:16-alpine
+    container_name: rooms-db
+    environment:
+      POSTGRES_DB: rooms_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Uisrael.
+    ports:
+      - "5433:5432"
+    volumes:
+      - rooms-db-data:/var/lib/postgresql/data
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d rooms_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  #base de datos de reservations
+  # microservicio de habitaciones
+  svc-rooms:
+    build:
+      context: ./svc-rooms
+      dockerfile: Dockerfile
+    container_name: svc-rooms
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://rooms-db:5432/rooms_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Uisrael.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8081:8081"
+    networks:
+      - microservicios-network
+    depends_on:
+      rooms-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+  # base de datos de reservations
   reservations-db:
     image: postgres:16-alpine
     container_name: reservations-db
@@ -11,7 +51,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Uisrael.
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - reservations-db-data:/var/lib/postgresql/data
     networks:
@@ -39,10 +79,11 @@ services:
     depends_on:
       reservations-db:
         condition: service_healthy
+
 volumes:
+  rooms-db-data:
   reservations-db-data:
+
 networks:
   microservicios-network:
     driver: bridge
-
-
