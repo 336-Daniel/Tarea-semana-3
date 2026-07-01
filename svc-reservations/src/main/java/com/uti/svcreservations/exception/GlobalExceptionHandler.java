@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
     }
 
 
-    //REGLAS DE NEGOCIO 402
+    //REGLAS DE NEGOCIO 422
     @ExceptionHandler(BusinessRulesException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleException(
             BusinessRulesException ex,
@@ -101,11 +101,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    // 400 BAD REQUEST (Para validaciones lógicas como fechas incorrectas)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ){
+        log.warn("Petición incorrecta: {} - Path:{}", ex.getMessage(), request.getRequestURI());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request){
-        log.warn("Error inesperado - Path:{} - Error: {}",  request.getRequestURI(), ex.getMessage(),ex);
+        log.error("Error inesperado - Path:{} - Error: {}",  request.getRequestURI(), ex.getMessage(),ex);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())

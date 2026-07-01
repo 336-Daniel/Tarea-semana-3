@@ -1,7 +1,6 @@
 package com.uti.svcreservations.dto;
 
 import com.uti.svcreservations.model.Status;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

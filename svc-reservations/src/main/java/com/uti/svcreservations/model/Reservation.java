@@ -28,7 +28,7 @@ public class Reservation {
     @Column(nullable = false, length = 200)
     private String guestName;
 
-    @Column(nullable = false, length = 200, unique = true)
+    @Column(nullable = false, length = 200)
     private String guestEmail;
 
     @Column(nullable = false)

@@ -16,7 +16,6 @@ public class ReservationMapper {
                 .checkInDate(request.getCheckInDate())
                 .checkOutDate(request.getCheckOutDate())
                 .status(request.getStatus())
-                .createdAt(request.getCreatedAt())
                 .build();
     }
 
@@ -42,8 +41,7 @@ public class ReservationMapper {
         reservation.setCheckInDate(request.getCheckInDate());
         reservation.setCheckOutDate(request.getCheckOutDate());
         reservation.setStatus(request.getStatus());
-        reservation.setTotalNights(request.getTotalNights());
-        reservation.setCreatedAt(request.getCreatedAt());
+
 
     }
 }

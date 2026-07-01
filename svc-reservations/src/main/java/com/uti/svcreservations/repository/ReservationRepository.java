@@ -14,6 +14,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Optional<Reservation> findById(Long id);
     List<Reservation> findAllByStatus(Status status);
     List<Reservation> findAllByGuestEmail(String guestEmail);
+    boolean existsByGuestEmailAndRoomIdAndStatus(String guestEmail, Long roomId, Status status);
 
 
 
