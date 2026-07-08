@@ -24,4 +24,10 @@ public class ReservationResponse {
     private Status status ;
     private Integer totalNights;
     private LocalDateTime createdAt;
+
+    //Datos del cuarto
+    private String roomNumber;
+    private String type;
+    private Double pricePerNight;
+
 }

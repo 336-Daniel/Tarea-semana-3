@@ -2,11 +2,14 @@ package com.uti.svcreservations.mapper;
 
 import com.uti.svcreservations.dto.ReservationRequest;
 import com.uti.svcreservations.dto.ReservationResponse;
+import com.uti.svcreservations.dto.RoomResponse;
 import com.uti.svcreservations.model.Reservation;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReservationMapper {
+
+
 
     public Reservation toEntity(ReservationRequest request) {
         return Reservation.builder()
@@ -33,6 +36,17 @@ public class ReservationMapper {
                 .build();
     }
 
+    public ReservationResponse toResponseWithRoom (Reservation reservation, RoomResponse room) {
+        ReservationResponse response = toResponse(reservation);
+
+        if (room != null) {
+            response.setRoomNumber(room.getRoomNumber());
+            response.setType(room.getType());
+            response.setPricePerNight(room.getPricePerNight());
+        }
+        return response;
+    }
+
     public void updateEntityFromRequest(ReservationRequest request, Reservation reservation) {
 
         reservation.setRoomId(request.getRoomId());
@@ -44,4 +58,7 @@ public class ReservationMapper {
 
 
     }
+
+
+
 }
