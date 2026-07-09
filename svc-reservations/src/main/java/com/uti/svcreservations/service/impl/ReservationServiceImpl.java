@@ -74,7 +74,7 @@ public class ReservationServiceImpl implements ReservationService {
                         "Reservacion no encontrada con el id: " + id
                 ));
         RoomResponse roomDetails = RestTemplateClient.getRoomById(reservation.getRoomId());
-        return reservationMapper.toResponse(reservation);
+        return reservationMapper.toResponseWithRoom(reservation, roomDetails);
     }
 
     //fallback de getReservationById
@@ -165,7 +165,7 @@ public class ReservationServiceImpl implements ReservationService {
         log.info("Obteniendo detralles de la habitacion via WebClient....");
         RoomResponse roomDetails = WebClient.getRoomById(Request.getRoomId());
 
-        return  reservationMapper.toResponse(savedReservation);
+        return  reservationMapper.toResponseWithRoom(savedReservation, roomDetails);
 
     }
 
@@ -224,7 +224,7 @@ public class ReservationServiceImpl implements ReservationService {
         log.info("Checkout realizado exitosamente. Reserva con id: {} marcada como COMPLETED", id);
 
         RoomResponse roomDetails = RestTemplateClient.getRoomById(updateReservation.getRoomId());
-        return reservationMapper.toResponse(updateReservation) ;
+        return reservationMapper.toResponseWithRoom(updateReservation, roomDetails) ;
     }
 
     //fallback de checkout
