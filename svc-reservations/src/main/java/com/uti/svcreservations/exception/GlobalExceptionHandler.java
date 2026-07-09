@@ -55,7 +55,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
-
     //REGLAS DE NEGOCIO 422
     @ExceptionHandler(BusinessRulesException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleException(
@@ -75,6 +74,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
     }
 
+
+    @ExceptionHandler(RoomsServiceException.class)
+    public ResponseEntity<ErrorResponse> handleRoomsServiceException(
+            RoomsServiceException ex,
+            HttpServletRequest request) {
+
+        log.error("Error del servicio de habitaciones: {} - Path: {}", ex.getMessage(), request.getRequestURI());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .error(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase())
+                .message("El servicio de habitaciones no está disponible actualmente.: " + ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
+    }
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex,
@@ -85,7 +104,7 @@ public class GlobalExceptionHandler {
         Map<String,String> validationErrors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach((error)->{
-            String fieldName = ((FieldError) error).getField();
+            String fieldName = error.getField();
             String errorMessage = error.getDefaultMessage();
             validationErrors.put(fieldName,errorMessage);
         });
@@ -101,7 +120,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    // 400 BAD REQUEST (Para validaciones lógicas como fechas incorrectas)
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex,
@@ -120,6 +139,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request){
@@ -135,5 +155,4 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
-
 }

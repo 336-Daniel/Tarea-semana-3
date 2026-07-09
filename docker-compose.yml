@@ -1,8 +1,6 @@
 version: '3.8'
-
 services:
 
-  # Base de datos para svc-rooms
   rooms-db:
     image: postgres:16-alpine
     container_name: rooms-db
@@ -21,29 +19,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
-  # Microservicio de habitaciones
-  svc-rooms:
-    build:
-      context: ./svc-rooms
-      dockerfile: Dockerfile
-    container_name: svc-rooms
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://rooms-db:5432/rooms_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: Uisrael.
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    ports:
-      - "8081:8081"
-    networks:
-      - microservicios-network
-    depends_on:
-      rooms-db:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # Base de datos para svc-reservations
   reservations-db:
     image: postgres:16-alpine
     container_name: reservations-db
@@ -62,9 +38,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
-  # Microservicio de reservaciones
+  svc-rooms:
+    build:
+      context: ./svc-rooms
+      dockerfile: Dockerfile
+    container_name: svc-rooms
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://rooms-db:5432/rooms_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Uisrael.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8081:8081"
+    networks:
+      - microservicios-network
+    depends_on:
+      rooms-db:
+        condition: service_healthy
+
   svc-reservations:
     build:
       context: ./svc-reservations
@@ -85,11 +77,9 @@ services:
         condition: service_healthy
       svc-rooms:
         condition: service_started
-    restart: unless-stopped
 
-  # API Gateway Nginx
   nginx-gateway:
-    image: nginx:latest
+    image: nginx:alpine
     container_name: nginx-gateway
     ports:
       - "80:80"
@@ -100,7 +90,6 @@ services:
     depends_on:
       - svc-rooms
       - svc-reservations
-    restart: unless-stopped
 
 volumes:
   rooms-db-data:
