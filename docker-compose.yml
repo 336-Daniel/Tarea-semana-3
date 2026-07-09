@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
 
   # Base de datos para svc-rooms
@@ -16,12 +17,13 @@ services:
     networks:
       - microservicios-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d rooms_db" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rooms_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  # microservicio de habitaciones
+  # Microservicio de habitaciones
   svc-rooms:
     build:
       context: ./svc-rooms
@@ -41,8 +43,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-
-  # base de datos de reservations
+  # Base de datos para svc-reservations
   reservations-db:
     image: postgres:16-alpine
     container_name: reservations-db
@@ -61,17 +62,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  reservations-service:
+  # Microservicio de reservaciones
+  svc-reservations:
     build:
       context: ./svc-reservations
       dockerfile: Dockerfile
-    container_name: reservations-service
+    container_name: svc-reservations
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://reservations-db:5432/reservations_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: Uisrael.
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      ROOMS_SERVICE_URL: http://svc-rooms:8081
     ports:
       - "8082:8082"
     networks:
@@ -79,6 +83,24 @@ services:
     depends_on:
       reservations-db:
         condition: service_healthy
+      svc-rooms:
+        condition: service_started
+    restart: unless-stopped
+
+  # API Gateway Nginx
+  nginx-gateway:
+    image: nginx:latest
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - microservicios-network
+    depends_on:
+      - svc-rooms
+      - svc-reservations
+    restart: unless-stopped
 
 volumes:
   rooms-db-data:
@@ -87,3 +109,4 @@ volumes:
 networks:
   microservicios-network:
     driver: bridge
+
