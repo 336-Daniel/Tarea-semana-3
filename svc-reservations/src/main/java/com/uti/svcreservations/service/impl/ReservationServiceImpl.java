@@ -1,5 +1,7 @@
 package com.uti.svcreservations.service.impl;
 
+import com.uti.svcreservations.client.RoomsRestTemplateClient;
+import com.uti.svcreservations.client.RoomsWebClient;
 import com.uti.svcreservations.dto.ReservationRequest;
 import com.uti.svcreservations.dto.ReservationResponse;
 import com.uti.svcreservations.dto.RoomAvailabilityResponse;
@@ -33,6 +35,9 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final ReservationMapper reservationMapper;
 
+    private final RoomsRestTemplateClient  RestTemplateClient;
+    private final RoomsWebClient WebClient;
+
 
 
     //listar todas las reservas
@@ -45,11 +50,11 @@ public class ReservationServiceImpl implements ReservationService {
                 .map(reservation ->
                 {
                     try {
-                        RoomResponse room = RestTemplateClient.getBookById(loan.getBookId());
-                        return loanMapper.toResponseWithBook(loan, book);
+                        RoomResponse room = RestTemplateClient.getRoomById(reservation.getRoomId());
+                        return reservationMapper.toResponseWithRoom(reservation, room);
                     }catch (Exception ex) {
-                        log.warn("No se logro obtener el detalle de la habitacion de la reserva con id: {}", loan.getId());
-                        return loanMapper.toResponse(loan);
+                        log.warn("No se logro obtener el detalle de la habitacion de la reserva con id: {}", reservation.getId());
+                        return reservationMapper.toResponse(reservation);
 
                     }
                 })
@@ -68,7 +73,7 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(()-> new ResourceNotfoundException(
                         "Reservacion no encontrada con el id: " + id
                 ));
-        RoomResponse roomDetails = RestTemplateClient.getBookById(loan.getBookId());
+        RoomResponse roomDetails = RestTemplateClient.getRoomById(reservation.getRoomId());
         return reservationMapper.toResponse(reservation);
     }
 
@@ -103,7 +108,7 @@ public class ReservationServiceImpl implements ReservationService {
                 .map(reservation ->
                         {
                             try {
-                                RoomResponse room = WebClient.getBookId(reservation.getRoomId());
+                                RoomResponse room = WebClient.getRoomById(reservation.getRoomId());
                                 return reservationMapper.toResponseWithRoom(reservation, room);
                             }catch (Exception ex) {
                                 log.warn("No se logro obtener el detalle de la habitacion de la reserva con id: {}", reservation.getId());
@@ -137,12 +142,12 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         log.info("Verificando disponibilidad de la habitacion via RestTemplate....");
-        RoomAvailabilityResponse availability = RestTemplateClient.get
+        RoomAvailabilityResponse availability = RestTemplateClient.getRoomAvailability(Request.getRoomId());
 
         if (!availability.getAvailable()){
             throw new BusinessRulesException(
-                    "Habitacion con id: "+ request.getBookId() + "No esta disponible "
-                            + availability.getAvailableStock());
+                    "Habitacion con id: "+ Request.getRoomId() + "No esta disponible "
+                            + availability.getAvailableRooms());
         }
 
         Reservation reservation = reservationMapper.toEntity(Request);
@@ -158,7 +163,7 @@ public class ReservationServiceImpl implements ReservationService {
         log.info("Reserva creada exitosamente con el id: {}", savedReservation.getId());
 
         log.info("Obteniendo detralles de la habitacion via WebClient....");
-        BookResponse bookDetails = WebClient.getBookId(request.getBookId());
+        RoomResponse roomDetails = WebClient.getRoomById(Request.getRoomId());
 
         return  reservationMapper.toResponse(savedReservation);
 
@@ -218,7 +223,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         log.info("Checkout realizado exitosamente. Reserva con id: {} marcada como COMPLETED", id);
 
-        RoomResponse roomDetails = RestTemplateClient.getBookById(updateLoan.getBookId());
+        RoomResponse roomDetails = RestTemplateClient.getRoomById(updateReservation.getRoomId());
         return reservationMapper.toResponse(updateReservation) ;
     }
 
